@@ -8,6 +8,7 @@ import RequestTable from "@/components/dashboard/RequestTable";
 import BloodStockChart from "@/components/dashboard/BloodStockChart";
 import RequestStatusChart from "@/components/dashboard/RequestStatusChart";
 import AIPredictionCard from "@/components/dashboard/AIPredictionCard";
+import BloodStockManager from "@/components/dashboard/BloodStockManager";
 import { StatsSkeleton, TableSkeleton } from "@/components/ui/Skeleton";
 import { Users, FileText, Droplet, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
@@ -15,7 +16,7 @@ import toast from "react-hot-toast";
 export default function AdminDashboardPage() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "donors" | "requests">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "donors" | "requests" | "stock">("overview");
   const [loadingActionId, setLoadingActionId] = useState<string | null>(null);
 
   const { data: stats, isLoading } = useQuery({
@@ -108,7 +109,7 @@ export default function AdminDashboardPage() {
 
       {/* Segmented tab control */}
       <div className="flex p-1 bg-slate-900/80 border border-slate-800 rounded-2xl w-fit gap-1">
-        {(["overview", "donors", "requests"] as const).map((tab) => (
+        {(["overview", "donors", "requests", "stock"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -196,6 +197,11 @@ export default function AdminDashboardPage() {
                  loadingId={loadingActionId}
                />
              </div>
+      ) : activeTab === "stock" ? (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <h2 className="text-xl font-semibold text-white">Blood Stock Management</h2>
+          <BloodStockManager />
+        </div>
       ) : null}
     </div>
   );

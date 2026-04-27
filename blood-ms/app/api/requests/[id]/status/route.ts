@@ -18,7 +18,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const request = await prisma.request.findUnique({ where: { id } });
     if (!request) return NextResponse.json({ error: "Request not found" }, { status: 404 });
 
-    // Only admin can change status, or the requester can cancel
     const isAdmin = session.user.role === "ADMIN";
     const isRequester = request.requesterId === session.user.id;
 
@@ -26,17 +25,30 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // If fulfilled, reduce blood stock
-    if (status === "FULFILLED" && isAdmin) {
+    // ── BLOOD STOCK MANAGEMENT ──
+    // Deduct stock when admin APPROVES (reserves the blood from inventory)
+    if (status === "APPROVED" && isAdmin && request.status === "PENDING") {
       const stock = await prisma.bloodStock.findUnique({
         where: { bloodGroup: request.bloodGroup },
       });
-      if (stock && stock.unitsAvailable >= request.units) {
-        await prisma.bloodStock.update({
-          where: { bloodGroup: request.bloodGroup },
-          data: { unitsAvailable: { decrement: request.units } },
-        });
+      if (!stock || stock.unitsAvailable < request.units) {
+        return NextResponse.json(
+          { error: `Insufficient stock. Only ${stock?.unitsAvailable ?? 0} unit(s) of ${request.bloodGroup.replace("_"," ")} available.` },
+          { status: 400 }
+        );
       }
+      await prisma.bloodStock.update({
+        where: { bloodGroup: request.bloodGroup },
+        data: { unitsAvailable: { decrement: request.units } },
+      });
+    }
+
+    // Restore stock if an APPROVED request is later REJECTED (un-reserve)
+    if (status === "REJECTED" && isAdmin && request.status === "APPROVED") {
+      await prisma.bloodStock.update({
+        where: { bloodGroup: request.bloodGroup },
+        data: { unitsAvailable: { increment: request.units } },
+      });
     }
 
     const updated = await prisma.request.update({
@@ -46,20 +58,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     });
 
     const { sendRequestStatusEmail } = await import("@/lib/mail");
-    const { createNotification, notifyAdmins } = await import("@/lib/notifications");
+    const { createNotification } = await import("@/lib/notifications");
 
     const bloodLabel = updated.bloodGroup.replace("_", " ");
     const notifMap: Record<string, { title: string; type: "INFO"|"SUCCESS"|"WARNING"|"CRITICAL" }> = {
-      APPROVED:  { title: "Blood Request Approved",   type: "INFO"     },
-      FULFILLED: { title: "Blood is Ready! 🩸",        type: "SUCCESS"  },
-      REJECTED:  { title: "Blood Request Rejected",   type: "WARNING"  },
+      APPROVED:  { title: "Blood Request Approved ✓",  type: "INFO"    },
+      FULFILLED: { title: "Blood Delivered! 🩸",         type: "SUCCESS" },
+      REJECTED:  { title: "Blood Request Rejected",     type: "WARNING" },
     };
 
     if (notifMap[updated.status]) {
       await createNotification({
         userId: request.requesterId,
         title: notifMap[updated.status].title,
-        message: `Your request for ${request.units} unit(s) of ${bloodLabel} has been marked as ${updated.status}.`,
+        message: `Your request for ${request.units} unit(s) of ${bloodLabel} has been ${updated.status.toLowerCase()}.`,
         type: notifMap[updated.status].type,
         link: "/requests",
       });

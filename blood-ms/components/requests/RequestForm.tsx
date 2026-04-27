@@ -9,10 +9,11 @@ import { BLOOD_GROUPS, URGENCY_LEVELS } from "@/lib/constants";
 
 interface RequestFormProps {
   onSubmit: (data: RequestInput) => Promise<void>;
+  onCancel?: () => void;
   isSubmitting?: boolean;
 }
 
-export default function RequestForm({ onSubmit, isSubmitting }: RequestFormProps) {
+export default function RequestForm({ onSubmit, onCancel, isSubmitting }: RequestFormProps) {
   const {
     register,
     handleSubmit,
@@ -67,8 +68,17 @@ export default function RequestForm({ onSubmit, isSubmitting }: RequestFormProps
         </div>
       </div>
 
-      <div className="pt-4 flex justify-end">
-        <Button type="submit" loading={isSubmitting} className="w-full md:w-auto min-w-[200px]">
+      <div className="pt-4 flex items-center justify-end gap-3">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all"
+          >
+            Cancel
+          </button>
+        )}
+        <Button type="submit" loading={isSubmitting} className="min-w-[180px]">
           Submit Blood Request
         </Button>
       </div>

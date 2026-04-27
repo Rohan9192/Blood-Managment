@@ -26,7 +26,7 @@ export default function Footer() {
               {[
                 { label: "Find Donors", href: "/donors" },
                 { label: "Blood Requests", href: "/requests" },
-                { label: "Dashboard", href: "/dashboard" },
+                { label: "Blood Stock", href: "/blood-availability" },
                 { label: "Register", href: "/register" },
               ].map((link) => (
                 <li key={link.href}>

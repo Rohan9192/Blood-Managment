@@ -16,6 +16,7 @@ export default function Navbar() {
     { href: "/", label: "Home" },
     { href: "/donors", label: "Donors", icon: Users },
     { href: "/requests", label: "Requests", icon: FileText },
+    { href: "/blood-availability", label: "Blood Stock", icon: Droplets },
   ];
 
   const authLinks = session

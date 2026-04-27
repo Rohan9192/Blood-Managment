@@ -12,10 +12,11 @@ import { Calendar } from "lucide-react";
 interface DonorFormProps {
   initialData?: Partial<DonorInput>;
   onSubmit: (data: DonorInput) => Promise<void>;
+  onCancel?: () => void;
   isSubmitting?: boolean;
 }
 
-export default function DonorForm({ initialData, onSubmit, isSubmitting }: DonorFormProps) {
+export default function DonorForm({ initialData, onSubmit, onCancel, isSubmitting }: DonorFormProps) {
   const {
     register,
     control,
@@ -103,7 +104,16 @@ export default function DonorForm({ initialData, onSubmit, isSubmitting }: Donor
         </div>
       </div>
 
-      <div className="pt-2 flex justify-end">
+      <div className="pt-2 flex items-center justify-end gap-3">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all"
+          >
+            Cancel
+          </button>
+        )}
         <Button type="submit" loading={isSubmitting} className="w-full md:w-auto min-w-[180px]">
           {initialData ? "Update Profile" : "Register as Donor"}
         </Button>

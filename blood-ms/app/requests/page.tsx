@@ -117,7 +117,11 @@ export default function RequestsPage() {
       )}
 
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create Blood Request">
-        <RequestForm onSubmit={async (data) => createMsg.mutateAsync(data)} isSubmitting={createMsg.isPending} />
+        <RequestForm
+          onSubmit={async (data) => createMsg.mutateAsync(data)}
+          onCancel={() => setIsModalOpen(false)}
+          isSubmitting={createMsg.isPending}
+        />
       </Modal>
     </div>
   );

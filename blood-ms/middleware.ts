@@ -5,7 +5,7 @@ import { auth } from "./lib/auth";
 const protectedRoutes = ["/dashboard", "/profile", "/admin"];
 const adminRoutes = ["/admin"];
 const authRoutes = ["/login", "/register"];
-const publicRoutes = ["/donor"]; // QR scan verify pages — no auth required
+const publicRoutes = ["/donor", "/blood-availability"]; // Public pages — no auth required
 
 export default auth(async function middleware(req: NextRequest & { auth?: { user?: { role?: string } } | null }) {
   const { pathname } = req.nextUrl;
