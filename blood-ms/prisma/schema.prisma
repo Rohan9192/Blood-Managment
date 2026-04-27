@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  DONOR
+  RECEIVER
+}
+
+enum BloodGroup {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+}
+
+enum Urgency {
+  NORMAL
+  URGENT
+  CRITICAL
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  FULFILLED
+  REJECTED
+}
+
+enum DonorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role      @default(DONOR)
+  emailVerified DateTime?
+  otp           String?
+  otpExpiry     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  donor    Donor?
+  requests Request[]
+  notifications Notification[]
+}
+
+model OtpVerification {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  otp       String
+  expiresAt DateTime
+  isVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Donor {
+  id               String      @id @default(uuid())
+  userId           String      @unique
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bloodGroup       BloodGroup
+  age              Int
+  location         String
+  contactNumber    String
+  availability     Boolean     @default(true)
+  lastDonationDate DateTime?
+  status           DonorStatus @default(PENDING)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  donationHistory DonationHistory[]
+}
+
+model Request {
+  id          String        @id @default(uuid())
+  requesterId String
+  requester   User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  bloodGroup  BloodGroup
+  units       Int
+  urgency     Urgency       @default(NORMAL)
+  status      RequestStatus @default(PENDING)
+  location    String
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model BloodStock {
+  id             String     @id @default(uuid())
+  bloodGroup     BloodGroup @unique
+  unitsAvailable Int        @default(0)
+  updatedAt      DateTime   @updatedAt
+}
+
+model DonationHistory {
+  id        String   @id @default(uuid())
+  donorId   String
+  donor     Donor    @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  units     Int      @default(1)
+  donatedAt DateTime @default(now())
+  notes     String?
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  CRITICAL
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  read      Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+}
+
